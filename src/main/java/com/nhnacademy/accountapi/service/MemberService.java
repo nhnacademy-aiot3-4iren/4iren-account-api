@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberService {
-    // test 용
+        //개발중우우우웅ㅇ
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder; //비번 암호화 전담
 
