@@ -8,10 +8,10 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://10.116.64.14:13306/aiot03_team4?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true
     username: aiot03_team4
-    password: Yky2!)i0b-h6kYwZ
+    password: ${MYSQL_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     database-platform: org.hibernate.dialect.MySQLDialect
 
     open-in-view: false
