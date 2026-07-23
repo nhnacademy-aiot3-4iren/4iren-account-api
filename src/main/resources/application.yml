@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: account-api
+    name: 4iren-account
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://10.116.64.14:13306/aiot03_team4?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true
