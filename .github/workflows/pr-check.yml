@@ -65,20 +65,47 @@ jobs:
           -Dsonar.projectKey=${{ env.PROJECT_KEY }}
           -Dsonar.qualitygate.wait=true
 
+            # ==========================================
+      # 1. 성공 시 댓글 (초록색)
       # ==========================================
-      # pr 화면에 소나큐브 리포트 링크 댓글 달기
-      # ==========================================
-      - name: PR에 소나큐브 링크 댓글 작성
+      - name: PR에 소나큐브 링크 댓글 작성 (성공)
         uses: marocchino/sticky-pull-request-comment@v2
-        if: always() # 성공하든 실패하든 무조건 댓글 달기
+        if: success() # 빌드/검사가 성공했을 때만 작동
         with:
           header: sonarqube-report
           recreate: true
           message: |
-            ### 🔍 SonarQube 분석 완료!
+            ### ✅ PR 품질 검사 통과!
             - 타깃 브랜치: `${{ github.base_ref }}`
-            - 분석 결과: `${{ job.status }}`
-
+            - 분석 결과: `Success` 🟢
+            
+            훌륭합니다! 모든 커버리지와 테스트를 통과했습니다.
+            
             📊 **소나큐브 상세 리포트 확인하러 가기**
-            - 🏢 [**내부망에서 접속 시 클릭**](http://10.116.64.14:9000/dashboard?id=${{ env.PROJECT_KEY }}&codeScope=overall)
+            - 🏢 [**내부망에서 접속 시 클릭**](<http://10.116.64.14:9000/dashboard?id=${{ env.PROJECT_KEY }}&codeScope=overall>)
+            - 🏠 [**외부망에서 접속 시 클릭**](<${{ secrets.SONAR_HOST_URL }}dashboard?id=${{ env.PROJECT_KEY }}&codeScope=overall>)
+
+      # ==========================================
+      # 2. 실패 시 댓글 (빨간색 가이드)
+      # ==========================================
+      - name: PR에 소나큐브 링크 댓글 작성 (실패)
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: failure() # 빌드/검사 중 하나라도 실패했을 때만 작동
+        with:
+          header: sonarqube-report
+          recreate: true
+          message: |
+            ### 🚨 PR 품질 검사 실패!
+            - 타깃 브랜치: `${{ github.base_ref }}`
+            - 분석 결과: `Failure` 🔴
+            
+            **[🤔 실패 원인 추측 (아래 중 하나일 확률이 높습니다)]**
+            1. **전체 커버리지 60% 미달**: JaCoCo 컷에 걸렸습니다. 테스트 코드를 더 작성하세요!
+            2. **새로운 코드 커버리지 미달**: 소나큐브 80% 컷에 걸렸습니다. (새로 짠 코드의 테스트 부족)
+            3. **컴파일/테스트 에러**: 작성하신 코드 자체에 버그가 있거나 테스트가 실패했습니다.
+            
+            정확한 원인은 하단의 깃허브 액션 `Details` 로그나, 아래 소나큐브 리포트에서 확인하세요!
+            
+            📊 **소나큐브 상세 리포트 확인하러 가기**
+            - 🏢 [**내부망에서 접속 시 클릭**](<http://10.116.64.14:9000/dashboard?id=${{ env.PROJECT_KEY }}&codeScope=overall>)
             - 🏠 [**외부망에서 접속 시 클릭**](<${{ secrets.SONAR_HOST_URL }}dashboard?id=${{ env.PROJECT_KEY }}&codeScope=overall>)
