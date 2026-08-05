@@ -1,0 +1,14 @@
+### 회원가입
+POST localhost:8083/api/account/signup
+Content-Type: application/json
+
+{
+  "userLoginId": "user",
+  "userPassword": "user123",
+  "userName": "유저",
+  "userEmail": "user@example.com"
+}
+
+### 회원 정보 조회
+GET localhost:8083/api/account/1
+X-USER-ID: 1

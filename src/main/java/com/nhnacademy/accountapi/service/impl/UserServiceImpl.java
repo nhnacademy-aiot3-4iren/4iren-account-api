@@ -87,14 +87,15 @@ public class UserServiceImpl implements UserService {
     // 회원정보 수정
     @Override
     @Transactional
-    public UserResponse updateUser(String userLoginId, Long requesterId, UpdateRequest request) {
-        // 회원 조회
-        User user = findByUserLoginId(userLoginId);
-
+    public UserResponse updateUser(Long userId, Long requesterId, UpdateRequest request) {
         // 요청자와 수정 대상이 다를 경우, 예외 처리
-        if (!Objects.equals(user.getUserId(), requesterId)) {
+        if (!Objects.equals(userId, requesterId)) {
             throw new UserNotAllowException("본인만 회원정보를 수정할 수 있습니다.");
         }
+
+        // 회원 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
         // 유저 이름 변경
         if (request.userName() != null && !request.userName().isEmpty()) {
@@ -134,13 +135,13 @@ public class UserServiceImpl implements UserService {
 
     // 단건 회원 조회
     @Override
-    public UserResponse getUser(String userLoginId, Long requesterId) {
+    public UserResponse getUser(Long userId, Long requesterId) {
         // 유저 조회
-        User user = userRepository.findByUserLoginId(userLoginId)
-                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userLoginId=" + userLoginId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
         // 요청자와 조회 대상이 다를 경우, 요청자가 관리자 권한을 가지고 있는지 확인
-        if (!Objects.equals(user.getUserId(), requesterId) && !checkUserAdmin(requesterId)) {
+        if (!Objects.equals(userId, requesterId) && !checkUserAdmin(requesterId)) {
             throw new UserNotAllowException("본인 또는 관리자만 회원정보를 조회할 수 있습니다.");
         }
 
@@ -151,12 +152,13 @@ public class UserServiceImpl implements UserService {
     // 회원 탈퇴(상태 변경)
     @Override
     @Transactional
-    public void withdraw(String userLoginId, Long requesterId) {
-        User user = findByUserLoginId(userLoginId);
-
-        if (!Objects.equals(user.getUserId(), requesterId)) {
+    public void withdraw(Long userId, Long requesterId) {
+        if (!Objects.equals(userId, requesterId)) {
             throw new UserNotAllowException("본인만 회원 탈퇴를 진행할 수 있습니다.");
         }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
         user.setUserStatus(UserStatus.WITHDRAWN);
     }
@@ -164,16 +166,19 @@ public class UserServiceImpl implements UserService {
     // 회원 휴면 처리
     @Override
     @Transactional
-    public void dormant(String userLoginId) {
-        User user = findByUserLoginId(userLoginId);
+    public void dormant(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
+
         user.setUserStatus(UserStatus.DORMANT);
     }
 
     // 회원 휴면 해제(재활성화)
     @Override
     @Transactional
-    public void active(String userLoginId) {
-        User user = findByUserLoginId(userLoginId);
+    public void active(Long userId) {
+        User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
         user.setUserStatus(UserStatus.ACTIVE);
     }
 
@@ -182,11 +187,11 @@ public class UserServiceImpl implements UserService {
         return new UserResponse(
                 user.getUserId(),
                 user.getUserLoginId(),
+                user.getUserRole().toString(),
                 user.getUserEmail(),
                 user.getUserName(),
                 user.getUserStatus().name(),
                 user.getCreatedAt()
-
         );
     }
 
@@ -196,11 +201,5 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserNotFoundException("유저를 찾을 수 없습니다."));
 
         return user.getUserRole().equals(UserRole.ADMIN);
-    }
-
-    //[공통 내부 메서드] 고유 ID로 회원 찾기
-    private User findByUserLoginId(String id) {
-        return userRepository.findByUserLoginId(id)
-                .orElseThrow(() -> new UserNotFoundException("회원을 찾을 수 없습니다. id=" + id));
     }
 }
