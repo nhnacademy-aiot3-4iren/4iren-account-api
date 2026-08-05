@@ -1,6 +1,7 @@
 package com.nhnacademy.accountapi.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -58,6 +59,11 @@ public class RestGlobalExceptionHandler {
         log.error("MethodArgumentNotValidException: {}", ex.getMessage());
 
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityException(DataIntegrityViolationException ex) {
+        return new ResponseEntity<>("데이터베이스 제약 조건 위반 (중복 등)", HttpStatus.CONFLICT);
     }
 
     // 나머지 서버 에러 처리

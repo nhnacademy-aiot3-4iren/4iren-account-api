@@ -36,14 +36,14 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    // 사용자 정보 수정 PUT /api/account/{user-login-id}
-    @PutMapping("/{user-login-id}")
+    // 사용자 정보 수정 PUT /api/account/{user-id}
+    @PutMapping("/{user-id}")
     public ResponseEntity<UserResponse> updateUser(
-            @PathVariable("user-login-id") String userLoginId,
+            @PathVariable("user-id") Long userId,
             @Valid @RequestBody UpdateRequest request,
             @RequestHeader("X-User-Id") Long requesterId
     ){
-        UserResponse userResponse = userService.updateUser(userLoginId, requesterId, request);
+        UserResponse userResponse = userService.updateUser(userId, requesterId, request);
         return ResponseEntity.ok(userResponse);
     }
 
@@ -56,23 +56,23 @@ public class UserController {
         return ResponseEntity.ok(responseList);
     }
 
-    // 사용자 정보 조회 GET /api/account/{user-login-id}
-    @GetMapping("/{user-login-id}")
+    // 사용자 정보 조회 GET /api/account/{user-id}
+    @GetMapping("/{user-id}")
     public ResponseEntity<UserResponse> getUser(
-            @PathVariable("user-login-id") String userLoginId,
+            @PathVariable("user-id") Long userId,
             @RequestHeader("X-User-Id") Long requesterId
     ){
-        UserResponse userResponse =userService.getUser(userLoginId, requesterId);
+        UserResponse userResponse =userService.getUser(userId, requesterId);
         return ResponseEntity.ok(userResponse);
     }
 
-    // 사용자 탈퇴 PATCH /api/account/{user-login-id}
-    @PatchMapping("/{user-login-id}")
+    // 사용자 탈퇴 PATCH /api/account/{user-id}
+    @PatchMapping("/{user-id}")
     public ResponseEntity<Void> withdraw(
-            @PathVariable("user-login-id") String userLoginId,
+            @PathVariable("user-id") Long userId,
             @RequestHeader("X-User-Id") Long requesterId
     ){
-        userService.withdraw(userLoginId, requesterId);
+        userService.withdraw(userId, requesterId);
         return ResponseEntity.noContent().build();
     }
 }

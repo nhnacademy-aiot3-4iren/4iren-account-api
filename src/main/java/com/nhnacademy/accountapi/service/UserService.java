@@ -12,15 +12,15 @@ public interface UserService {
 
     LoginResponse login(LoginRequest request);
 
-    UserResponse updateUser(String userLoginId, Long requesterId, UpdateRequest request);
+    UserResponse updateUser(Long userId, Long requesterId, UpdateRequest request);
 
     List<UserResponse> getAllUsers(Long requesterId);
 
-    UserResponse getUser(String userLoginId, Long requesterId);
+    UserResponse getUser(Long userId, Long requesterId);
 
-    void withdraw(String userLoginId, Long requesterId);
+    void withdraw(Long userId, Long requesterId);
 
-    void dormant(String userLoginId);
+    void dormant(Long userId);
 
-    void active(String userLoginId);
+    void active(Long userId);
 }
