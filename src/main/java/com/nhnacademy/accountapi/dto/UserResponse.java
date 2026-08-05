@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record UserResponse (
         Long userId,
         String userLoginId,
+        String userRole,
         String userEmail,
         String userName,
         String userStatus,
