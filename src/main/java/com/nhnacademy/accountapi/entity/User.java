@@ -17,25 +17,25 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(length = 50, nullable = false, unique = true)
-    private String userLoginId;
+    @Column(name = "user_login_id", length = 50, nullable = false, unique = true)
+    private String loginId;
 
-    @Column(length = 200, nullable = false)
-    private String userPassword;
+    @Column(name = "user_password", length = 200, nullable = false)
+    private String password;
 
-    @Column(length = 100, nullable = false, unique = true)
-    private String userEmail;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole userRole;
-
-    @Column(length = 50, nullable = false)
-    private String userName;
+    @Column(name = "user_email", length = 100, nullable = false, unique = true)
+    private String email;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserStatus userStatus;
+    @Column(name = "user_role", nullable = false)
+    private UserRole role;
+
+    @Column(name = "user_name", length = 50, nullable = false)
+    private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_status", nullable = false)
+    private UserStatus status;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -46,16 +46,16 @@ public class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        this.userStatus = UserStatus.ACTIVE;
+        this.status = UserStatus.ACTIVE;
     }
 
     @Builder
     public User(String loginId, String email, String password, String name) {
-        this.userLoginId = loginId;
-        this.userEmail = email;
-        this.userPassword = password;
-        this.userName = name;
-        this.userRole = UserRole.USER;
+        this.loginId = loginId;
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.role = UserRole.NORMAL;
     }
 
     public void updateLoginAt() {
