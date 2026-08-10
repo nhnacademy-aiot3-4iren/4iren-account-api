@@ -10,6 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+
 import java.util.List;
 
 @RestController //이 클래스가 JSON 데이터를 반환하는 REST API 대문임을 선언
@@ -19,12 +23,11 @@ public class UserController {
 
     // 회원가입 POST /api/account/signup
     @PostMapping("/signup")
-    public ResponseEntity<UserResponse> signUp(
+    public ResponseEntity<Void> signUp(
             @Valid @RequestBody RegisterRequest request
     ){
-        UserResponse userResponse = userService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
-
+        userService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     // 로그인 POST /api/account/login
@@ -49,11 +52,12 @@ public class UserController {
 
     // 사용자 전체 조회 GET /api/account/users
     @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers(
-            @RequestHeader("X-User-Id") Long requesterId
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
+            @RequestHeader("X-User-Id") Long requesterId,
+            @PageableDefault(size = 20) Pageable pageable
     ){
-        List<UserResponse> responseList= userService.getAllUsers(requesterId);
-        return ResponseEntity.ok(responseList);
+        Page<UserResponse> responsePage = userService.getAllUsers(requesterId, pageable);
+        return ResponseEntity.ok(responsePage);
     }
 
     // 사용자 정보 조회 GET /api/account/{user-id}
