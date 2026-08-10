@@ -16,9 +16,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -32,26 +33,26 @@ public class UserServiceImpl implements UserService {
     // 회원가입(create)
     @Override
     @Transactional
-    public UserResponse register(RegisterRequest request) {
+    public void register(RegisterRequest request) {
         //a. 로그인 ID 중복 체크
-        if (userRepository.existsByUserLoginId(request.userLoginId())) {
-            throw new UserAlreadyExistsException("이미 존재하는 아이디입니다" + request.userLoginId());
+        if (userRepository.existsByLoginId(request.loginId())) {
+            throw new UserAlreadyExistsException("이미 존재하는 아이디입니다" + request.loginId());
         }
 
         //b. 이메일 중복 체크
-        if (userRepository.existsByUserEmail(request.userEmail())) {
-            throw new UserAlreadyExistsException("이미 사용중인 이메일입니다." + request.userEmail());
+        if (userRepository.existsByEmail(request.email())) {
+            throw new UserAlreadyExistsException("이미 사용중인 이메일입니다." + request.email());
         }
 
         //c. 내용물 다꺼내와서 조립하기
         User user = User.builder()
-                .loginId(request.userLoginId())
-                .email(request.userEmail())
-                .password(passwordEncoder.encode(request.userPassword()))
-                .name(request.userName())
+                .loginId(request.loginId())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .name(request.name())
                 .build();
 
-        return toResponse(userRepository.save(user));
+        userRepository.save(user);
     }
 
     // 로그인
@@ -59,17 +60,17 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public LoginResponse login(LoginRequest request) {
         // 로그인 ID로 회원 조회
-        User user = userRepository.findByUserLoginId(request.userLoginId())
+        User user = userRepository.findByLoginId(request.loginId())
                 .orElseThrow(() -> new UserNotFoundException("아이디 또는 비밀번호가 올바르지 않습니다"));
 
         // 비밀번호 일치 여부 확인
-        if (!passwordEncoder.matches(request.userPassword(), user.getUserPassword())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new UserNotFoundException("아이디 또는 비밀번호가 올바르지 않습니다");
         }
 
         //계정 상태가 ACTIVE가 아니면 로그인 거부
-        if (user.getUserStatus() != UserStatus.ACTIVE) {
-            throw new UserNotAllowException("로그인 할 수 없는 계정 상태입니다:" + user.getUserStatus());
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new UserNotAllowException("로그인 할 수 없는 계정 상태입니다:" + user.getStatus());
         }
 
         // 마지막 로그인 시간 업데이트
@@ -77,9 +78,9 @@ public class UserServiceImpl implements UserService {
 
         return new LoginResponse(
                 user.getUserId(),
-                user.getUserLoginId(),
-                user.getUserName(),
-                user.getUserRole().name()
+                user.getLoginId(),
+                user.getName(),
+                user.getRole().name()
         );
     }
 
@@ -97,23 +98,25 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
-        // 유저 이름 변경
-        if (request.userName() != null && !request.userName().isEmpty()) {
-            user.setUserName(request.userName());
+        if(request.loginId()!=null&& !request.loginId().isEmpty() && !Objects.equals(user.getLoginId(), request.loginId())) {
+            if (userRepository.existsByLoginId(request.loginId())) {
+                throw new UserAlreadyExistsException("이미 사용중인 로그인 ID입니다." + request.loginId());
+            }
+            user.setLoginId(request.loginId());
         }
 
         // 유저 이메일 변경
-        if (request.userEmail() != null && !request.userEmail().isEmpty() && !Objects.equals(user.getUserEmail(), request.userEmail())) {
-            if (userRepository.existsByUserEmail(request.userEmail())) {
-                throw new UserAlreadyExistsException("이미 사용중인 이메일입니다." + request.userEmail());
+        if (request.email() != null && !request.email().isEmpty() && !Objects.equals(user.getEmail(), request.email())) {
+            if (userRepository.existsByEmail(request.email())) {
+                throw new UserAlreadyExistsException("이미 사용중인 이메일입니다." + request.email());
             }
 
-            user.setUserEmail(request.userEmail());
+            user.setEmail(request.email());
         }
 
         // 유저 패스워드 변경
-        if (request.userPassword() != null && !request.userPassword().isEmpty()) {
-            user.setUserPassword(passwordEncoder.encode(request.userPassword()));
+        if (request.password() != null && !request.password().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.password()));
         }
 
         return toResponse(user);
@@ -121,16 +124,14 @@ public class UserServiceImpl implements UserService {
 
     // 전체 회원 조회
     @Override
-    public List<UserResponse> getAllUsers(Long requesterId) {
+    public Page<UserResponse> getAllUsers(Long requesterId, Pageable pageable) {
         // 요청자가 관리자 권한인지 확인
-        if (!checkUserAdmin(requesterId)) {
+        if (!checkSuperAdmin(requesterId)) {
             throw new UserNotAllowException("관리자만 모든 회원 정보를 조회할 수 있습니다.");
         }
 
-        return userRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        return userRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     // 단건 회원 조회
@@ -141,7 +142,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
         // 요청자와 조회 대상이 다를 경우, 요청자가 관리자 권한을 가지고 있는지 확인
-        if (!Objects.equals(userId, requesterId) && !checkUserAdmin(requesterId)) {
+        if (!Objects.equals(userId, requesterId) && !checkSuperAdmin(requesterId)) {
             throw new UserNotAllowException("본인 또는 관리자만 회원정보를 조회할 수 있습니다.");
         }
 
@@ -160,7 +161,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
-        user.setUserStatus(UserStatus.WITHDRAWN);
+        user.setStatus(UserStatus.WITHDRAWN);
     }
 
     // 회원 휴면 처리
@@ -170,7 +171,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
-        user.setUserStatus(UserStatus.DORMANT);
+        user.setStatus(UserStatus.DORMANT);
     }
 
     // 회원 휴면 해제(재활성화)
@@ -179,27 +180,27 @@ public class UserServiceImpl implements UserService {
     public void active(Long userId) {
         User user = userRepository.findById(userId)
                         .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
-        user.setUserStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ACTIVE);
     }
 
     // [공통 내부 메서드] Entity 장부를 UserResponse 안전 가방으로 변환
     private UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getUserId(),
-                user.getUserLoginId(),
-                user.getUserRole().toString(),
-                user.getUserEmail(),
-                user.getUserName(),
-                user.getUserStatus().name(),
+                user.getLoginId(),
+                user.getRole().toString(),
+                user.getEmail(),
+                user.getName(),
+                user.getStatus().name(),
                 user.getCreatedAt()
         );
     }
 
-    // [공통 내부 메서드] 요청자가 관리자 권한을 가지고 있는지 확인
-    private boolean checkUserAdmin(Long userId) {
+    // [공통 내부 메서드] 요청자가 총 관리자 권한을 가지고 있는지 확인
+    private boolean checkSuperAdmin(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("유저를 찾을 수 없습니다."));
 
-        return user.getUserRole().equals(UserRole.ADMIN);
+        return user.getRole().equals(UserRole.SUPER_ADMIN);
     }
 }

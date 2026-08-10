@@ -3,10 +3,10 @@ POST localhost:8083/api/account/signup
 Content-Type: application/json
 
 {
-  "userLoginId": "user",
-  "userPassword": "user123",
-  "userName": "유저",
-  "userEmail": "user@example.com"
+  "loginId": "user",
+  "password": "user123",
+  "name": "유저",
+  "email": "user@example.com"
 }
 
 ### 회원 정보 조회
