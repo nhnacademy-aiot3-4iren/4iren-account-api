@@ -16,8 +16,6 @@ public interface UserService {
 
     UserResponse updateUser(Long userId, Long requesterId, UpdateRequest request);
 
-    Page<UserResponse> getAllUsers(Long requesterId, Pageable pageable);
-
     UserResponse getUser(Long userId, Long requesterId);
 
     void withdraw(Long userId, Long requesterId);

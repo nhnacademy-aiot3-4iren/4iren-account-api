@@ -1,12 +1,13 @@
 package com.nhnacademy.accountapi.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "members")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,7 +24,8 @@ public class User {
     @Column(name = "user_password", length = 200, nullable = false)
     private String password;
 
-    @Column(name = "user_email", length = 100, nullable = false, unique = true)
+    @Email
+    @Column(name = "user_email", length = 100, nullable = true, unique = true)
     private String email;
 
     @Enumerated(EnumType.STRING)
@@ -43,6 +45,9 @@ public class User {
     @Column
     private LocalDateTime lastLoginAt;
 
+    @Column(nullable = true)
+    private Long createdBy;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -50,12 +55,37 @@ public class User {
     }
 
     @Builder
-    public User(String loginId, String email, String password, String name) {
+    public User(String loginId, String password, String email, UserRole role, String name, Long createdBy) {
         this.loginId = loginId;
-        this.email = email;
         this.password = password;
+        this.email = email;
+        this.role = role;
         this.name = name;
-        this.role = UserRole.NORMAL;
+        this.createdBy = createdBy;
+    }
+
+    // 일반 사용자용 회원가입
+    public static User createNormalUser(String loginId, String email, String password, String name) {
+        return User.builder()
+                .loginId(loginId)
+                .email(email)
+                .password(password)
+                .name(name)
+                .role(UserRole.NORMAL)
+                .createdBy(null)
+                .build();
+    }
+
+    // 관리자용 회원가입
+    public static User createAdminUser(String loginId, String password, String name, Long createdBy) {
+        return User.builder()
+                .loginId(loginId)
+                .password(password)
+                .email(null)
+                .role(UserRole.ADMIN)
+                .name(name)
+                .createdBy(createdBy)
+                .build();
     }
 
     public void updateLoginAt() {
