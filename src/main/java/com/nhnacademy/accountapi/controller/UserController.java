@@ -10,12 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-
-import java.util.List;
-
 @RestController //이 클래스가 JSON 데이터를 반환하는 REST API 대문임을 선언
 @RequiredArgsConstructor
 public class UserController {
@@ -44,27 +38,17 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable("user-id") Long userId,
             @Valid @RequestBody UpdateRequest request,
-            @RequestHeader("X-User-Id") Long requesterId
+            @RequestHeader("X-USER-ID") Long requesterId
     ){
         UserResponse userResponse = userService.updateUser(userId, requesterId, request);
         return ResponseEntity.ok(userResponse);
-    }
-
-    // 사용자 전체 조회 GET /api/account/users
-    @GetMapping("/users")
-    public ResponseEntity<Page<UserResponse>> getAllUsers(
-            @RequestHeader("X-User-Id") Long requesterId,
-            @PageableDefault(size = 20) Pageable pageable
-    ){
-        Page<UserResponse> responsePage = userService.getAllUsers(requesterId, pageable);
-        return ResponseEntity.ok(responsePage);
     }
 
     // 사용자 정보 조회 GET /api/account/{user-id}
     @GetMapping("/{user-id}")
     public ResponseEntity<UserResponse> getUser(
             @PathVariable("user-id") Long userId,
-            @RequestHeader("X-User-Id") Long requesterId
+            @RequestHeader("X-USER-ID") Long requesterId
     ){
         UserResponse userResponse =userService.getUser(userId, requesterId);
         return ResponseEntity.ok(userResponse);
@@ -74,7 +58,7 @@ public class UserController {
     @PatchMapping("/{user-id}")
     public ResponseEntity<Void> withdraw(
             @PathVariable("user-id") Long userId,
-            @RequestHeader("X-User-Id") Long requesterId
+            @RequestHeader("X-USER-ID") Long requesterId
     ){
         userService.withdraw(userId, requesterId);
         return ResponseEntity.noContent().build();
