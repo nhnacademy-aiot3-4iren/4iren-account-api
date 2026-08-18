@@ -4,7 +4,6 @@ import com.nhnacademy.accountapi.dto.*;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
 import com.nhnacademy.accountapi.entity.User;
-import com.nhnacademy.accountapi.entity.UserRole;
 import com.nhnacademy.accountapi.entity.UserStatus;
 import com.nhnacademy.accountapi.exception.UserAlreadyExistsException;
 import com.nhnacademy.accountapi.exception.UserNotAllowException;
@@ -16,9 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import java.util.List;
 import java.util.Objects;
 
 
@@ -44,13 +40,15 @@ public class UserServiceImpl implements UserService {
             throw new UserAlreadyExistsException("이미 사용중인 이메일입니다." + request.email());
         }
 
+        String encodedPassword= passwordEncoder.encode(request.password());
+
         //c. 내용물 다꺼내와서 조립하기
-        User user = User.builder()
-                .loginId(request.loginId())
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .name(request.name())
-                .build();
+        User user = User.createNormalUser(
+                request.loginId(),
+                request.email(),
+                encodedPassword,
+                request.name()
+        );
 
         userRepository.save(user);
     }
@@ -122,18 +120,6 @@ public class UserServiceImpl implements UserService {
         return toResponse(user);
     }
 
-    // 전체 회원 조회
-    @Override
-    public Page<UserResponse> getAllUsers(Long requesterId, Pageable pageable) {
-        // 요청자가 관리자 권한인지 확인
-        if (!checkSuperAdmin(requesterId)) {
-            throw new UserNotAllowException("관리자만 모든 회원 정보를 조회할 수 있습니다.");
-        }
-
-        return userRepository.findAll(pageable)
-                .map(this::toResponse);
-    }
-
     // 단건 회원 조회
     @Override
     public UserResponse getUser(Long userId, Long requesterId) {
@@ -141,8 +127,8 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
-        // 요청자와 조회 대상이 다를 경우, 요청자가 관리자 권한을 가지고 있는지 확인
-        if (!Objects.equals(userId, requesterId) && !checkSuperAdmin(requesterId)) {
+        // 요청자와 동일인인지 확인
+        if (!Objects.equals(userId, requesterId)) {
             throw new UserNotAllowException("본인 또는 관리자만 회원정보를 조회할 수 있습니다.");
         }
 
@@ -185,22 +171,16 @@ public class UserServiceImpl implements UserService {
 
     // [공통 내부 메서드] Entity 장부를 UserResponse 안전 가방으로 변환
     private UserResponse toResponse(User user) {
+        String email=user.getEmail()!=null?user.getEmail():"등록안됨";
+
         return new UserResponse(
                 user.getUserId(),
                 user.getLoginId(),
                 user.getRole().toString(),
-                user.getEmail(),
+                email,
                 user.getName(),
                 user.getStatus().name(),
                 user.getCreatedAt()
         );
-    }
-
-    // [공통 내부 메서드] 요청자가 총 관리자 권한을 가지고 있는지 확인
-    private boolean checkSuperAdmin(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("유저를 찾을 수 없습니다."));
-
-        return user.getRole().equals(UserRole.SUPER_ADMIN);
     }
 }
