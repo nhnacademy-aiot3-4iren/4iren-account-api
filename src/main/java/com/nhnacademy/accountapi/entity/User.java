@@ -1,6 +1,7 @@
 package com.nhnacademy.accountapi.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class User {
     @Column(name = "user_password", length = 200, nullable = false)
     private String password;
 
+    @Email
     @Column(name = "user_email", length = 100, nullable = true, unique = true)
     private String email;
 

@@ -19,7 +19,7 @@ public class OwnerController {
     private final OwnerService ownerService;
 
     // 관리자 생성
-    @PostMapping("signup")
+    @PostMapping("/signup")
     public ResponseEntity<Void> signUp(
             @RequestHeader("X-USER-ID") Long requesterId,
             @Valid @RequestBody AdminCreateRequest request
@@ -30,7 +30,7 @@ public class OwnerController {
     }
 
     // 관리자 목록 조회
-    @GetMapping("/users")
+    @GetMapping("/list")
     public ResponseEntity<List<UserResponse>> getUsers(
             @RequestHeader("X-USER-ID") Long requesterId
     ) {
