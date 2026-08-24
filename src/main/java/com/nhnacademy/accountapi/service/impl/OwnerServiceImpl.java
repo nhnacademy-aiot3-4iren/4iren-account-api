@@ -118,6 +118,7 @@ public class OwnerServiceImpl implements OwnerService {
 
         String encodedPassword=passwordEncoder.encode(defaultPassword);
         user.setPassword(encodedPassword);
+        user.setLastLoginAt(null);
     }
 
     // [공통 내부 메서드] Entity 장부를 UserResponse 안전 가방으로 변환
