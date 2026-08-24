@@ -71,6 +71,9 @@ public class UserServiceImpl implements UserService {
             throw new UserNotAllowException("로그인 할 수 없는 계정 상태입니다:" + user.getStatus());
         }
 
+        // 첫번째 로그인 여부 확인
+        boolean firstLogin = (user.getLastLoginAt() == null);
+
         // 마지막 로그인 시간 업데이트
         user.updateLoginAt();
 
@@ -78,7 +81,8 @@ public class UserServiceImpl implements UserService {
                 user.getUserId(),
                 user.getLoginId(),
                 user.getName(),
-                user.getRole().name()
+                user.getRole().name(),
+                firstLogin
         );
     }
 
