@@ -8,6 +8,7 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -71,7 +72,7 @@ public class RabbitConfig {
 
     // Account Role Change 이벤트 발행용 익스체인지
     @Bean
-    public TopicExchange accountExchange() {
-        return new TopicExchange(accountProperties.getExchange());
+    public DirectExchange accountExchange() {
+        return new DirectExchange(accountProperties.getExchange());
     }
 }
