@@ -14,7 +14,7 @@ public class PaymentMessageListener {
 
     private final UserService userService;
 
-    @RabbitListener(queues = "${rabbitmq.payment.role-change.queue:account.payment.role-change.queue}")
+    @RabbitListener(queues = "${rabbitmq.payment.role-change.queue:4iren.account.payment.role-change.queue}")
     public void handlePaymentCompleteEvent(PaymentCompleteMessage message) {
         log.info("결제 완료 이벤트 수신 - userId: {}, role: {}, jti: {}", message.userId(), message.role(), message.jti());
 
