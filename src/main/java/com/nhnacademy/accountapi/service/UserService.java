@@ -4,10 +4,6 @@ import com.nhnacademy.accountapi.dto.*;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import java.util.List;
-
 public interface UserService {
 
     void register(RegisterRequest request);
@@ -23,4 +19,8 @@ public interface UserService {
     void dormant(Long userId);
 
     void active(Long userId);
+
+    void updateUserRole(Long userId, String role);
+
+    void publishRoleChangeEvent(Long userId, String role, String jti);
 }

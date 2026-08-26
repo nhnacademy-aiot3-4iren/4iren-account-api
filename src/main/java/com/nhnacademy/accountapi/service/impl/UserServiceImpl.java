@@ -8,9 +8,13 @@ import com.nhnacademy.accountapi.entity.UserStatus;
 import com.nhnacademy.accountapi.exception.UserAlreadyExistsException;
 import com.nhnacademy.accountapi.exception.UserNotAllowException;
 import com.nhnacademy.accountapi.exception.UserNotFoundException;
+import com.nhnacademy.accountapi.config.properties.RabbitAccountProperties;
+import com.nhnacademy.accountapi.dto.message.RoleChangeMessage;
+import com.nhnacademy.accountapi.entity.UserRole;
 import com.nhnacademy.accountapi.repository.UserRepository;
 import com.nhnacademy.accountapi.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,6 +32,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder; //비번 암호화 전담
+    private final RabbitTemplate rabbitTemplate;
+    private final RabbitAccountProperties accountProperties;
 
     // 회원가입(create)
     @Override
@@ -165,12 +174,45 @@ public class UserServiceImpl implements UserService {
     }
 
     // 회원 휴면 해제(재활성화)
-    @Override
     @Transactional
+    @Override
     public void active(Long userId) {
         User user = userRepository.findById(userId)
                         .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
         user.setStatus(UserStatus.ACTIVE);
+    }
+
+    @Override
+    @Transactional
+    public void updateUserRole(Long userId, String role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
+
+        try {
+            UserRole newRole = UserRole.valueOf(role.toUpperCase());
+            user.setRole(newRole);
+            log.info("유저 {}의 권한이 {}로 변경되었습니다.", user.getUserId(), newRole);
+        } catch (IllegalArgumentException e) {
+            log.error("잘못된 역할(role) 값입니다: {}", role);
+            throw e; // 재시도 및 DLQ 처리를 위해 예외 발생
+        }
+    }
+
+    @Override
+    public void publishRoleChangeEvent(Long userId, String role, String jti) {
+        RoleChangeMessage roleChangeMessage = new RoleChangeMessage(
+                userId,
+                role.toUpperCase(),
+                jti
+        );
+
+        rabbitTemplate.convertAndSend(
+                accountProperties.getExchange(),
+                accountProperties.getRoutingKey(),
+                roleChangeMessage
+        );
+
+        log.info("권한 변경 이벤트 발행 완료 - exchange: {}, routingKey: {}", accountProperties.getExchange(), accountProperties.getRoutingKey());
     }
 
     // [공통 내부 메서드] Entity 장부를 UserResponse 안전 가방으로 변환
