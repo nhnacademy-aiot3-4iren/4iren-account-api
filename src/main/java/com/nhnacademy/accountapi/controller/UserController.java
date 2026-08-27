@@ -63,4 +63,13 @@ public class UserController {
         userService.withdraw(userId, requesterId);
         return ResponseEntity.noContent().build();
     }
+
+    // 비밀번호 초기화 (이메일 발송) POST /api/account/reset-password
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ){
+        userService.resetPassword(request);
+        return ResponseEntity.ok().build();
+    }
 }

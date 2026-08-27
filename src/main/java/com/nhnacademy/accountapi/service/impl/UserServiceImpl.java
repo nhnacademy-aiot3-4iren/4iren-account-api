@@ -12,6 +12,7 @@ import com.nhnacademy.accountapi.config.properties.RabbitAccountProperties;
 import com.nhnacademy.accountapi.dto.message.RoleChangeMessage;
 import com.nhnacademy.accountapi.entity.UserRole;
 import com.nhnacademy.accountapi.repository.UserRepository;
+import com.nhnacademy.accountapi.service.MailService;
 import com.nhnacademy.accountapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -19,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -35,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder; //비번 암호화 전담
     private final RabbitTemplate rabbitTemplate;
     private final RabbitAccountProperties accountProperties;
+    private final MailService mailService;
 
     // 회원가입(create)
     @Override
@@ -181,6 +184,32 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                         .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
         user.setStatus(UserStatus.ACTIVE);
+    }
+
+    @Transactional
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByLoginId(request.getLoginId())
+                .orElseThrow(() -> new UserNotFoundException("일치하는 회원 정보가 없습니다."));
+
+        if (!Objects.equals(user.getEmail(), request.getEmail())) {
+            throw new UserNotFoundException("일치하는 회원 정보가 없습니다.");
+        }
+
+        // 10자리 임시 비밀번호 생성 (영문 대소문자 + 숫자)
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        String temporaryPassword = sb.toString();
+
+        // 비밀번호 변경
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
+
+        // 이메일 전송
+        mailService.sendTemporaryPassword(user.getEmail(), temporaryPassword);
     }
 
     @Override
