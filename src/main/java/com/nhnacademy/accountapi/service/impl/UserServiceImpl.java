@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService {
 
         //b. 이메일 중복 체크
         if (userRepository.existsByEmail(request.email())) {
-            throw new UserAlreadyExistsException("이미 사용중인 이메일입니다." + request.email());
+            throw new UserAlreadyExistsException("이미 존재하는 이메일입니다." + request.email());
         }
 
         String encodedPassword= passwordEncoder.encode(request.password());
@@ -91,6 +91,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse updateUser(Long userId, Long requesterId, UpdateRequest request) {
+
         // 요청자와 수정 대상이 다를 경우, 예외 처리
         if (!Objects.equals(userId, requesterId)) {
             throw new UserNotAllowException("본인만 회원정보를 수정할 수 있습니다.");
@@ -100,6 +101,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("존재하지 않는 회원입니다. userId=" + userId));
 
+        //유저 로그인 아이디 변경
         if(request.loginId()!=null&& !request.loginId().isEmpty() && !Objects.equals(user.getLoginId(), request.loginId())) {
             if (userRepository.existsByLoginId(request.loginId())) {
                 throw new UserAlreadyExistsException("이미 사용중인 로그인 ID입니다." + request.loginId());

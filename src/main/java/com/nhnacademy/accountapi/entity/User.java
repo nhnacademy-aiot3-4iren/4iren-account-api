@@ -92,3 +92,16 @@ public class User {
         lastLoginAt = LocalDateTime.now();
     }
 }
+
+//reservation_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+//reservation_code VARCHAR(64) NOT NULL UNIQUE COMMENT '유일한 예약 번호 (RESV-04)',
+//user_id BIGINT NOT NULL,
+//room_id BIGINT NOT NULL,
+//check_in_date DATE NOT NULL,
+//check_out_date DATE NOT NULL,
+//guest_count TINYINT NOT NULL,
+//status VARCHAR(20) NOT NULL DEFAULT 'RESERVED' COMMENT 'RESERVED, CANCELLED',
+//created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+//CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users (user_id),
+//CONSTRAINT fk_reservations_room FOREIGN KEY (room_id) REFERENCES rooms (room_id),
+//CONSTRAINT chk_reservation_dates CHECK (check_out_date > check_in_date)
