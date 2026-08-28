@@ -2,6 +2,7 @@ package com.nhnacademy.accountapi.service.impl;
 
 import com.nhnacademy.accountapi.dto.AdminCreateRequest;
 import com.nhnacademy.accountapi.dto.UserResponse;
+import com.nhnacademy.accountapi.dto.message.AdminCreatedMessage;
 import com.nhnacademy.accountapi.entity.User;
 import com.nhnacademy.accountapi.entity.UserStatus;
 import com.nhnacademy.accountapi.exception.UserAlreadyExistsException;
@@ -26,9 +27,16 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
 
     @Value("${admin.default-password}")
     private String defaultPassword;
+
+    @Value("${rabbitmq.account.admin-create.exchange:4iren.account.events}")
+    private String adminCreateExchange;
+
+    @Value("${rabbitmq.account.admin-create.routing-key:4iren.account.admin-create}")
+    private String adminCreateRoutingKey;
 
     // 관리자 생성
     @Override
@@ -51,7 +59,9 @@ public class OwnerServiceImpl implements OwnerService {
 
         userRepository.save(user);
 
-        // TODO Core API에 관리자 팀에 추가하라고 이벤트 발행 추가
+        // Core API에 관리자 팀에 추가하라고 이벤트 발행
+        AdminCreatedMessage message = new AdminCreatedMessage(user.getUserId(), requesterId);
+        rabbitTemplate.convertAndSend(adminCreateExchange, adminCreateRoutingKey, message);
     }
 
     // 관리자 목록 조회
