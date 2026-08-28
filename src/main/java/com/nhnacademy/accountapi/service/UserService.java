@@ -3,10 +3,7 @@ package com.nhnacademy.accountapi.service;
 import com.nhnacademy.accountapi.dto.*;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface UserService {
 
@@ -23,4 +20,11 @@ public interface UserService {
     void dormant(Long userId);
 
     void active(Long userId);
+
+    @Transactional
+    void resetPassword(ResetPasswordRequest request);
+
+    void updateUserRole(Long userId, String role);
+
+    void publishRoleChangeEvent(Long userId, String role, String jti);
 }
