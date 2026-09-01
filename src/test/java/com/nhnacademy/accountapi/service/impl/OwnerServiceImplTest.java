@@ -38,6 +38,10 @@ class OwnerServiceImplTest {
     @InjectMocks
     private OwnerServiceImpl ownerService;
 
+    @Mock
+    private org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+
+
     private User testAdmin;
     private final Long ownerId=999L;
 
@@ -47,6 +51,9 @@ class OwnerServiceImplTest {
         testAdmin.setStatus(UserStatus.ACTIVE);
         ReflectionTestUtils.setField(testAdmin,"userId",10L);
         ReflectionTestUtils.setField(ownerService,"defaultPassword","1234");
+
+        ReflectionTestUtils.setField(ownerService, "adminCreateExchange", "4iren.account.events");
+        ReflectionTestUtils.setField(ownerService, "adminCreateRoutingKey", "4iren.account.admin-create");
 
     }
 

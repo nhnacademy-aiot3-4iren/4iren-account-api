@@ -1,17 +1,19 @@
 package com.nhnacademy.accountapi.service.impl;
 
 import com.nhnacademy.accountapi.dto.RegisterRequest;
+import com.nhnacademy.accountapi.dto.ResetPasswordRequest;
 import com.nhnacademy.accountapi.dto.UpdateRequest;
 import com.nhnacademy.accountapi.dto.UserResponse;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
+import com.nhnacademy.accountapi.dto.message.RoleChangeMessage;
 import com.nhnacademy.accountapi.entity.User;
+import com.nhnacademy.accountapi.entity.UserRole;
 import com.nhnacademy.accountapi.entity.UserStatus;
 import com.nhnacademy.accountapi.exception.UserAlreadyExistsException;
 import com.nhnacademy.accountapi.exception.UserNotAllowException;
 import com.nhnacademy.accountapi.exception.UserNotFoundException;
 import com.nhnacademy.accountapi.repository.UserRepository;
-import lombok.extern.java.Log;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -42,6 +45,13 @@ class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userService;
+
+    @Mock //  RabbitMQ 가짜 객체
+    private org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+    @Mock //  RabbitMQ 속성 가짜 객체
+    private com.nhnacademy.accountapi.config.properties.RabbitAccountProperties accountProperties;
+    @Mock //  메일 서비스 가짜 객체
+    private com.nhnacademy.accountapi.service.MailService mailService;
 
     private User testUser;
 
@@ -335,5 +345,110 @@ class UserServiceImplTest {
 
         //then
         assertThat(testUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 성공 - 임시 비밀번호 발급 및 메일 전송")
+    void resetPassword_Success() {
+        // given
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setLoginId("user1");
+        request.setEmail("user1@nhn.com");
+
+        given(userRepository.findByLoginId("user1")).willReturn(Optional.of(testUser));
+        given(passwordEncoder.encode(any(String.class))).willReturn("encoded_temp_pw");
+
+        // when
+        userService.resetPassword(request);
+
+        // then
+        assertThat(testUser.getPassword()).isEqualTo("encoded_temp_pw");
+        verify(mailService).sendTemporaryPassword(eq("user1@nhn.com"), any(String.class));
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 실패 - 존재하지 않는 회원 로그인 ID")
+    void resetPassword_UserNotFound() {
+        // given
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setLoginId("ghost");
+        request.setEmail("ghost@nhn.com");
+
+        given(userRepository.findByLoginId("ghost")).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.resetPassword(request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining("일치하는 회원 정보가 없습니다.");
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 실패 - 등록된 이메일 불일치")
+    void resetPassword_EmailMismatch() {
+        // given
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setLoginId("user1");
+        request.setEmail("wrong@nhn.com");
+
+        given(userRepository.findByLoginId("user1")).willReturn(Optional.of(testUser));
+
+        // when & then
+        assertThatThrownBy(() -> userService.resetPassword(request))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining("일치하는 회원 정보가 없습니다.");
+    }
+
+    @Test
+    @DisplayName("유저 권한 변경 성공 - Role이 변경됨")
+    void updateUserRole_Success() {
+        // given
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+
+        // when
+        userService.updateUserRole(1L, "ADMIN");
+
+        // then
+        assertThat(testUser.getRole()).isEqualTo(UserRole.ADMIN);
+    }
+
+    @Test
+    @DisplayName("유저 권한 변경 실패 - 존재하지 않는 회원 ID")
+    void updateUserRole_UserNotFound() {
+        // given
+        given(userRepository.findById(99L)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateUserRole(99L, "ADMIN"))
+                .isInstanceOf(UserNotFoundException.class)
+                .hasMessageContaining("존재하지 않는 회원입니다.");
+    }
+
+    @Test
+    @DisplayName("유저 권한 변경 실패 - 잘못된 Role 값 전달 시 예외 발생")
+    void updateUserRole_InvalidRole() {
+        // given
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+
+        // when & then
+        assertThatThrownBy(() -> userService.updateUserRole(1L, "INVALID_ROLE"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("권한 변경 이벤트 발행 성공 - RabbitMQ 메세지 전송")
+    void publishRoleChangeEvent_Success() {
+        // given
+        given(accountProperties.getExchange()).willReturn("4iren.account.events");
+        given(accountProperties.getRoutingKey()).willReturn("4iren.account.role-change");
+
+        // when
+        userService.publishRoleChangeEvent(1L, "ADMIN", "jti-1234");
+
+        // then
+        verify(rabbitTemplate).convertAndSend(
+                eq("4iren.account.events"),
+                eq("4iren.account.role-change"),
+                any(RoleChangeMessage.class)
+        );
     }
 }
