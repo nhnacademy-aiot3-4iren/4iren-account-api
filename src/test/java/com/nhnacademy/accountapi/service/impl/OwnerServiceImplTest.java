@@ -38,8 +38,10 @@ class OwnerServiceImplTest {
     @InjectMocks
     private OwnerServiceImpl ownerService;
 
+
     @Mock
     private org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+
 
 
     private User testAdmin;
