@@ -1,5 +1,6 @@
 package com.nhnacademy.accountapi.service;
 
+import com.nhnacademy.accountapi.exception.MailSendFailedException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,6 @@ public class MailService {
      * @param toEmail 수신자 이메일
      * @param temporaryPassword 발급된 임시 비밀번호
      */
-    @Async
     public void sendTemporaryPassword(String toEmail, String temporaryPassword) {
         if (fromEmail == null || fromEmail.isBlank()) {
             log.warn("이메일 발신자(spring.mail.username)가 설정되지 않아 메일을 전송할 수 없습니다.");
@@ -35,7 +35,7 @@ public class MailService {
         }
 
         try {
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, "UTF-8");
 
             helper.setFrom(fromEmail);
@@ -72,7 +72,7 @@ public class MailService {
             log.info("임시 비밀번호 HTML 이메일 발송 완료: {}", toEmail);
         } catch (Exception e) {
             log.error("임시 비밀번호 HTML 이메일 발송 실패: {}", toEmail, e);
-            throw new RuntimeException("이메일 발송에 실패했습니다.", e);
+            throw new MailSendFailedException("이메일 발송에 실패했습니다.", e);
         }
     }
 }

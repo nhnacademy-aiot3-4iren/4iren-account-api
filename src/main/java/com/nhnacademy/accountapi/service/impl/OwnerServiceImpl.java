@@ -11,6 +11,7 @@ import com.nhnacademy.accountapi.exception.UserNotFoundException;
 import com.nhnacademy.accountapi.repository.UserRepository;
 import com.nhnacademy.accountapi.service.OwnerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     @Value("${admin.default-password}")
     private String defaultPassword;
