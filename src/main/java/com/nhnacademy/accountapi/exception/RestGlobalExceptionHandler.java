@@ -23,7 +23,7 @@ public class RestGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
-        log.error("UserAlreadyExistsException: {}", ex.getMessage());
+        log.warn("UserAlreadyExistsException: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 ErrorResponse.of(HttpStatus.CONFLICT.value(), ex.getMessage())
@@ -34,7 +34,7 @@ public class RestGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(UserBadRequestException.class)
     public ResponseEntity<ErrorResponse> handleUserBadRequestException(UserBadRequestException ex) {
-        log.error("UserBadRequestException: {}", ex.getMessage());
+        log.warn("UserBadRequestException: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                 ErrorResponse.of(HttpStatus.BAD_REQUEST.value(), ex.getMessage())
@@ -45,7 +45,7 @@ public class RestGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(UserNotAllowException.class)
     public ResponseEntity<ErrorResponse> handleUserNotAllowException(UserNotAllowException ex) {
-        log.error("UserNotAllowException: {}", ex.getMessage());
+        log.warn("UserNotAllowException: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                 ErrorResponse.of(HttpStatus.FORBIDDEN.value(), ex.getMessage())
@@ -56,7 +56,7 @@ public class RestGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
-        log.error("UserNotFoundException: {}", ex.getMessage());
+        log.warn("UserNotFoundException: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 ErrorResponse.of(HttpStatus.NOT_FOUND.value(), ex.getMessage())
@@ -67,7 +67,7 @@ public class RestGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidException(MethodArgumentNotValidException ex) {
-        log.error("MethodArgumentNotValidException: {}", ex.getMessage());
+        log.warn("MethodArgumentNotValidException: {}", ex.getMessage());
 
         String errorMessage=ex.getBindingResult().getFieldErrors().stream()
                 .map(error->error.getDefaultMessage())
@@ -82,10 +82,21 @@ public class RestGlobalExceptionHandler {
     // 데이터 무결성 위반 예외 처리
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityException(DataIntegrityViolationException ex) {
-        log.error("DataIntegrityViolationException: {}", ex.getMessage());
+        log.warn("DataIntegrityViolationException: {}", ex.getMessage());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 ErrorResponse.of(HttpStatus.CONFLICT.value(), "login-id 혹은 email이 이미 사용 중입니다.")
+        );
+    }
+
+    // 메일 발송 실패 예외 처리
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    @ExceptionHandler(MailSendFailedException.class)
+    public ResponseEntity<ErrorResponse> handleMailSendFailedException(MailSendFailedException ex) {
+        log.error("MailSendFailedException: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                ErrorResponse.of(HttpStatus.SERVICE_UNAVAILABLE.value(), ex.getMessage())
         );
     }
 

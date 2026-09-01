@@ -3,6 +3,7 @@ package com.nhnacademy.accountapi.controller;
 import com.nhnacademy.accountapi.dto.*;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
+import com.nhnacademy.accountapi.service.MailService;
 import com.nhnacademy.accountapi.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final MailService mailService;
 
     // 회원가입 POST /api/account/signup
     @PostMapping("/signup")
@@ -64,12 +66,25 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    // 비밀번호 초기화 (이메일 발송) POST /api/account/reset-password
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request
     ){
-        userService.resetPassword(request);
+        // 1. 트랜잭션 내에서 비밀번호 변경 및 임시 비밀번호 획득
+        String tempPassword = userService.resetPassword(request);
+        
+        // 2. 트랜잭션 종료 후(DB 커넥션 반납) 동기로 메일 발송
+        mailService.sendTemporaryPassword(request.getEmail(), tempPassword);
+        
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/email")
+    public ResponseEntity<String> getEmail(
+        @RequestBody Long userId
+    ) {
+        String email=userService.getEmail(userId);
+
+        return ResponseEntity.ok(email);
     }
 }
