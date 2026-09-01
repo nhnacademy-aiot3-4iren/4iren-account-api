@@ -12,7 +12,6 @@ import com.nhnacademy.accountapi.config.properties.RabbitAccountProperties;
 import com.nhnacademy.accountapi.dto.message.RoleChangeMessage;
 import com.nhnacademy.accountapi.entity.UserRole;
 import com.nhnacademy.accountapi.repository.UserRepository;
-import com.nhnacademy.accountapi.service.MailService;
 import com.nhnacademy.accountapi.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -34,10 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; //비번 암호화 전담
+    private final PasswordEncoder passwordEncoder; //비밀번호 암호화 전담
     private final RabbitTemplate rabbitTemplate;
     private final RabbitAccountProperties accountProperties;
-    private final MailService mailService;
 
     // 회원가입(create)
     @Override
@@ -134,6 +132,13 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(request.password()));
         }
 
+        // 유저 이름 변경
+        if (request.name() != null && !request.name().isEmpty()) {
+            user.setName(request.name());
+        }
+
+        userRepository.save(user);
+
         return toResponse(user);
     }
 
@@ -188,7 +193,7 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public void resetPassword(ResetPasswordRequest request) {
+    public String resetPassword(ResetPasswordRequest request) {
         User user = userRepository.findByLoginId(request.getLoginId())
                 .orElseThrow(() -> new UserNotFoundException("일치하는 회원 정보가 없습니다."));
 
@@ -208,8 +213,8 @@ public class UserServiceImpl implements UserService {
         // 비밀번호 변경
         user.setPassword(passwordEncoder.encode(temporaryPassword));
 
-        // 이메일 전송
-        mailService.sendTemporaryPassword(user.getEmail(), temporaryPassword);
+        // DB 트랜잭션을 일찍 닫기 위해, 이메일 전송은 Controller에서 직접 호출하도록 임시 비밀번호만 반환
+        return temporaryPassword;
     }
 
     @Override
@@ -244,6 +249,13 @@ public class UserServiceImpl implements UserService {
         );
 
         log.info("권한 변경 이벤트 발행 완료 - exchange: {}, routingKey: {}", accountProperties.getExchange(), accountProperties.getRoutingKey());
+    }
+
+    @Override
+    public String getEmail(Long userId) {
+
+        return userRepository.findEmailByUserId(userId)
+                .orElseThrow(()-> new UserNotFoundException("존재하지 않는 회원입니다. userId="+userId));
     }
 
     // [공통 내부 메서드] Entity 장부를 UserResponse 안전 가방으로 변환
