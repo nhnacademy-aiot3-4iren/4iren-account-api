@@ -105,7 +105,7 @@ class UserControllerTest {
     @DisplayName("4. 회원 정보 수정 성공 - PUT /api/account/{user-id} 요청 시 200 OK 반환")
     void updateUser_Success() throws Exception {
         // given
-        UpdateRequest request = new UpdateRequest("newId", "new@nhn.com", "newPw");
+        UpdateRequest request = new UpdateRequest("newId", "new@nhn.com", "newPw", "");
         UserResponse response = new UserResponse(1L, "newId", "NORMAL", "new@nhn.com", "홍길동", "ACTIVE", LocalDateTime.now());
 
         given(userService.updateUser(eq(1L), eq(1L), any(UpdateRequest.class))).willReturn(response);

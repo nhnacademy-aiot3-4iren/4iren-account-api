@@ -14,6 +14,7 @@ import com.nhnacademy.accountapi.exception.UserAlreadyExistsException;
 import com.nhnacademy.accountapi.exception.UserNotAllowException;
 import com.nhnacademy.accountapi.exception.UserNotFoundException;
 import com.nhnacademy.accountapi.repository.UserRepository;
+import com.nhnacademy.accountapi.service.MailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -174,7 +175,7 @@ class UserServiceImplTest {
     @DisplayName("회원정보 수정 성공- 로그인id, 이메일, 비밀번호 모두 정상 변경")
     void updateUser_Success() {
         //given
-        UpdateRequest updateRequest=new UpdateRequest("newId","new@nhn.com","newPw");
+        UpdateRequest updateRequest=new UpdateRequest("newId","new@nhn.com","newPw", "");
         ReflectionTestUtils.setField(testUser,"userId",1L);
 
         given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
@@ -196,7 +197,7 @@ class UserServiceImplTest {
     @DisplayName("회원정보 수정 실패- 요청자와 수정 대상이 다르면 예외 발생")
     void updateUser_NotOwner() {
         //given
-        UpdateRequest updateRequest=new UpdateRequest("newId","new@nhn.com","newPw");
+        UpdateRequest updateRequest=new UpdateRequest("newId","new@nhn.com","newPw", "");
 
         //when&then
         assertThatThrownBy(()->userService.updateUser(1L,2L,updateRequest))
@@ -207,7 +208,7 @@ class UserServiceImplTest {
     @DisplayName("회원정보 수정 실패- 존재하지 않는 회원인 경우 예외 발생")
     void updateUser_UserNotFound() {
         //given
-        UpdateRequest updateRequest=new UpdateRequest("newId","new@nhn.com","newPw");
+        UpdateRequest updateRequest=new UpdateRequest("newId","new@nhn.com","newPw", "");
         given(userRepository.findById(1L)).willReturn(Optional.empty());
 
         //when&then
@@ -220,7 +221,7 @@ class UserServiceImplTest {
     @DisplayName("회원정보 수정 실패- 변경하려는 로그인 id가 이미 존재하는 경우 예외 발생")
     void updateUser_DuplicateLoginId() {
         //given
-        UpdateRequest updateRequest=new UpdateRequest("alreadyExistId","nhn.com","newPw");
+        UpdateRequest updateRequest=new UpdateRequest("alreadyExistId","nhn.com","newPw", "");
         given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(userRepository.existsByLoginId("alreadyExistId")).willReturn(true);
 
@@ -234,7 +235,7 @@ class UserServiceImplTest {
     @DisplayName("회원정보 수정 실패- 변경하려는 이메일이 이미 존재하는 경우 예외 발생")
     void updateUser_DuplicateEmail() {
         //given
-        UpdateRequest updateRequest=new UpdateRequest("newId","alreadyExist.com","newPw");
+        UpdateRequest updateRequest=new UpdateRequest("newId","alreadyExist.com","newPw", "");
 
         given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(userRepository.existsByLoginId("newId")).willReturn(false);
