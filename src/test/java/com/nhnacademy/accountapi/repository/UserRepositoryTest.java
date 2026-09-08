@@ -15,7 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DataJpaTest
+@DataJpaTest(properties = {
+    "spring.jpa.hibernate.ddl-auto=create",
+    "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect"
+})
 class UserRepositoryTest {
 
     @Autowired

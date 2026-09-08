@@ -103,7 +103,7 @@ class OwnerServiceImplTest {
     }
 
     @Test
-    @DisplayName("")
+    @DisplayName("오너 단건 조회 성공")
     void getUser_Success() {
         //given
         given(userRepository.findById(1L)).willReturn(Optional.of(testAdmin));
