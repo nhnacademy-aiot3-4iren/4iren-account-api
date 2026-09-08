@@ -1,5 +1,6 @@
 package com.nhnacademy.accountapi.service.impl;
 
+import com.nhnacademy.accountapi.config.properties.RabbitAccountProperties;
 import com.nhnacademy.accountapi.dto.RegisterRequest;
 import com.nhnacademy.accountapi.dto.ResetPasswordRequest;
 import com.nhnacademy.accountapi.dto.UpdateRequest;
@@ -14,7 +15,6 @@ import com.nhnacademy.accountapi.exception.UserAlreadyExistsException;
 import com.nhnacademy.accountapi.exception.UserNotAllowException;
 import com.nhnacademy.accountapi.exception.UserNotFoundException;
 import com.nhnacademy.accountapi.repository.UserRepository;
-import com.nhnacademy.accountapi.service.MailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -48,11 +49,9 @@ class UserServiceImplTest {
     private UserServiceImpl userService;
 
     @Mock //  RabbitMQ 가짜 객체
-    private org.springframework.amqp.rabbit.core.RabbitTemplate rabbitTemplate;
+    private RabbitTemplate rabbitTemplate;
     @Mock //  RabbitMQ 속성 가짜 객체
-    private com.nhnacademy.accountapi.config.properties.RabbitAccountProperties accountProperties;
-    @Mock //  메일 서비스 가짜 객체
-    private com.nhnacademy.accountapi.service.MailService mailService;
+    private RabbitAccountProperties accountProperties;
 
     private User testUser;
 
@@ -364,7 +363,6 @@ class UserServiceImplTest {
 
         // then
         assertThat(testUser.getPassword()).isEqualTo("encoded_temp_pw");
-        verify(mailService).sendTemporaryPassword(eq("user1@nhn.com"), any(String.class));
     }
 
     @Test

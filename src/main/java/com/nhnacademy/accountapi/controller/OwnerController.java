@@ -1,5 +1,6 @@
 package com.nhnacademy.accountapi.controller;
 
+import com.nhnacademy.accountapi.controller.api.OwnerApi;
 import com.nhnacademy.accountapi.dto.AdminCreateRequest;
 import com.nhnacademy.accountapi.dto.UserResponse;
 import com.nhnacademy.accountapi.service.OwnerService;
@@ -14,11 +15,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/owner")
-public class OwnerController {
+public class OwnerController implements OwnerApi {
 
     private final OwnerService ownerService;
 
     // 관리자 생성
+    @Override
     @PostMapping("/signup")
     public ResponseEntity<Void> signUp(
             @RequestHeader("X-USER-ID") Long requesterId,
@@ -30,6 +32,7 @@ public class OwnerController {
     }
 
     // 관리자 목록 조회
+    @Override
     @GetMapping("/list")
     public ResponseEntity<List<UserResponse>> getUsers(
             @RequestHeader("X-USER-ID") Long requesterId
@@ -40,6 +43,7 @@ public class OwnerController {
     }
 
     // 관리자 상세 조회
+    @Override
     @GetMapping("/{user-id}")
     public ResponseEntity<UserResponse> getUser(
         @RequestHeader("X-USER-ID") Long requesterId,
@@ -51,6 +55,7 @@ public class OwnerController {
     }
 
     // 관리자 삭제
+    @Override
     @PatchMapping("/{user-id}")
     public ResponseEntity<Void> deleteUser(
         @RequestHeader("X-USER-ID") Long requesterId,
@@ -62,6 +67,7 @@ public class OwnerController {
     }
 
     // 관리자 복구
+    @Override
     @PatchMapping("/{user-id}/restore")
     public ResponseEntity<Void> restoreUser(
         @RequestHeader("X-USER-ID") Long requesterId,
@@ -73,6 +79,7 @@ public class OwnerController {
     }
 
     // 비밀번호 초기화
+    @Override
     @PatchMapping("/{user-id}/reset-password")
     public ResponseEntity<Void> resetPassword(
         @RequestHeader("X-USER-ID") Long requesterId,

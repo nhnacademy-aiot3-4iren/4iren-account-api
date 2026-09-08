@@ -9,6 +9,7 @@ import com.nhnacademy.accountapi.dto.UpdateRequest;
 import com.nhnacademy.accountapi.dto.UserResponse;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
+import com.nhnacademy.accountapi.service.MailService;
 import com.nhnacademy.accountapi.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private MailService mailService;
 
     @MockitoBean
     private OwnerRoleInterceptor ownerRoleInterceptor; // WebConfig에 포함된 인터셉터 가짜 빈 주입
@@ -161,8 +165,10 @@ class UserControllerTest {
         ResetPasswordRequest request = new ResetPasswordRequest();
         request.setLoginId("user1");
         request.setEmail("user1@nhn.com");
+        String tempPassword = "TEMP_PASSWORD123";
 
-        doNothing().when(userService).resetPassword(any(ResetPasswordRequest.class));
+        given(userService.resetPassword(any(ResetPasswordRequest.class))).willReturn(tempPassword);
+        doNothing().when(mailService).sendTemporaryPassword(eq(request.getEmail()), eq(tempPassword));
 
         // when & then
         mockMvc.perform(post("/api/account/reset-password")
