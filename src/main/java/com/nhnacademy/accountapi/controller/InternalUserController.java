@@ -1,5 +1,6 @@
 package com.nhnacademy.accountapi.controller;
 
+import com.nhnacademy.accountapi.controller.api.InternalUserApi;
 import com.nhnacademy.accountapi.dto.internal.UserRoleResponse;
 import com.nhnacademy.accountapi.dto.internal.UserStatusBatchRequest;
 import com.nhnacademy.accountapi.dto.internal.UserStatusResponse;
@@ -14,10 +15,11 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/internal/users")
-public class InternalUserController {
+public class InternalUserController implements InternalUserApi {
 
     private final InternalUserService internalUserService;
 
+    @Override
     @GetMapping("/{user-id}/role")
     public ResponseEntity<UserRoleResponse> getUserRole(
             @PathVariable("user-id") Long userId
@@ -27,6 +29,7 @@ public class InternalUserController {
         );
     }
 
+    @Override
     @GetMapping("/{user-id}/status")
     public ResponseEntity<UserStatusResponse> getUserStatus(
             @PathVariable("user-id") Long userId
@@ -36,6 +39,7 @@ public class InternalUserController {
         );
     }
 
+    @Override
     @PostMapping("/statuses")
     public ResponseEntity<List<UserStatusResponse>> getUserStatuses(
             @Valid @RequestBody UserStatusBatchRequest request

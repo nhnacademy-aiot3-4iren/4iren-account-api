@@ -1,5 +1,6 @@
 package com.nhnacademy.accountapi.controller;
 
+import com.nhnacademy.accountapi.controller.api.UserApi;
 import com.nhnacademy.accountapi.dto.*;
 import com.nhnacademy.accountapi.dto.login.LoginRequest;
 import com.nhnacademy.accountapi.dto.login.LoginResponse;
@@ -13,11 +14,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController //이 클래스가 JSON 데이터를 반환하는 REST API 대문임을 선언
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserApi {
     private final UserService userService;
     private final MailService mailService;
 
     // 회원가입 POST /api/account/signup
+    @Override
     @PostMapping("/signup")
     public ResponseEntity<Void> signUp(
             @Valid @RequestBody RegisterRequest request
@@ -27,6 +29,7 @@ public class UserController {
     }
 
     // 로그인 POST /api/account/login
+    @Override
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request
@@ -36,6 +39,7 @@ public class UserController {
     }
 
     // 사용자 정보 수정 PUT /api/account/{user-id}
+    @Override
     @PutMapping("/{user-id}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable("user-id") Long userId,
@@ -47,6 +51,7 @@ public class UserController {
     }
 
     // 사용자 정보 조회 GET /api/account/{user-id}
+    @Override
     @GetMapping("/{user-id}")
     public ResponseEntity<UserResponse> getUser(
             @PathVariable("user-id") Long userId,
@@ -57,6 +62,7 @@ public class UserController {
     }
 
     // 사용자 탈퇴 PATCH /api/account/{user-id}
+    @Override
     @PatchMapping("/{user-id}")
     public ResponseEntity<Void> withdraw(
             @PathVariable("user-id") Long userId,
@@ -66,6 +72,7 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @PostMapping("/reset-password")
     public ResponseEntity<Void> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request
@@ -79,6 +86,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @Override
     @PostMapping("/email")
     public ResponseEntity<String> getEmail(
         @RequestBody Long userId
