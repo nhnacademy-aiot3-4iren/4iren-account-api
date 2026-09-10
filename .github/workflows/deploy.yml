@@ -76,7 +76,7 @@ jobs:
 
           echo "1번 서버 업데이트 시작..."
           docker compose up -d --no-deps ${{ env.IMAGE_NAME }}-1
-          
+
           echo "스프링부트 초기화 대기 중 (30초)..."
           sleep 30
 
@@ -119,6 +119,7 @@ jobs:
           fi
 
           echo "무중단 배포가 완료되었습니다!"
+
   # 3. 텔레그램 결과 알림 (빌드나 배포가 실패해도 무조건 실행됨)
   notify:
     needs: [ build-and-push, deploy ]
@@ -136,3 +137,4 @@ jobs:
             - 배포(Deploy): ${{ needs.deploy.result }}
 
             커밋 메시지: ${{ github.event.head_commit.message }}
+          
